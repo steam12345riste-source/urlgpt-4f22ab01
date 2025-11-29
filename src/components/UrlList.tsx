@@ -59,7 +59,7 @@ export const UrlList = ({ refresh, onCountChange }: UrlListProps) => {
   };
 
   const copyToClipboard = (shortCode: string) => {
-    const shortUrl = `${window.location.origin}/s/${shortCode}`;
+    const shortUrl = `${window.location.origin}/${shortCode}`;
     navigator.clipboard.writeText(shortUrl);
     toast({
       title: "Copied!",
@@ -111,7 +111,7 @@ export const UrlList = ({ refresh, onCountChange }: UrlListProps) => {
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 mb-1">
               <code className="text-primary font-mono text-sm">
-                {window.location.origin}/s/{url.short_code}
+                {window.location.origin}/{url.short_code}
               </code>
             </div>
             <p className="text-xs text-muted-foreground truncate">{url.original_url}</p>
