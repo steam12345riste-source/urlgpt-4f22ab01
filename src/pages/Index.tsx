@@ -6,6 +6,7 @@ import { Link2 } from "lucide-react";
 const Index = () => {
   const [refresh, setRefresh] = useState(0);
   const [urlCount, setUrlCount] = useState(0);
+  const [hasCustomCode, setHasCustomCode] = useState(false);
 
   const handleUrlCreated = () => {
     setRefresh((prev) => prev + 1);
@@ -23,10 +24,10 @@ const Index = () => {
         </div>
 
         <div className="bg-card border border-border rounded-lg p-6 space-y-6">
-          <UrlShortenerForm onUrlCreated={handleUrlCreated} currentCount={urlCount} />
+          <UrlShortenerForm onUrlCreated={handleUrlCreated} currentCount={urlCount} hasCustomCode={hasCustomCode} />
           <div className="border-t border-border pt-6">
             <h2 className="text-lg font-semibold mb-4 text-foreground">Your Shortened URLs</h2>
-            <UrlList refresh={refresh} onCountChange={setUrlCount} />
+            <UrlList refresh={refresh} onCountChange={setUrlCount} onCustomCodeCheck={setHasCustomCode} />
           </div>
         </div>
 
