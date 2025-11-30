@@ -12,11 +12,20 @@ const Redirect = () => {
       try {
         const { data, error } = await supabase
           .from("shortened_urls")
-          .select("original_url")
+          .select("original_url, expire_at")
           .eq("short_code", code)
           .single();
 
         if (error || !data) {
+          window.location.href = "/";
+          return;
+        }
+
+        // Check if link has expired
+        const expirationTime = new Date(data.expire_at).getTime();
+        const now = new Date().getTime();
+        
+        if (now > expirationTime) {
           window.location.href = "/";
           return;
         }

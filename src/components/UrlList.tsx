@@ -9,6 +9,7 @@ interface ShortenedUrl {
   short_code: string;
   original_url: string;
   created_at: string;
+  expire_at: string;
 }
 
 interface UrlListProps {
@@ -20,7 +21,16 @@ interface UrlListProps {
 export const UrlList = ({ refresh, onCountChange, onCustomCodeCheck }: UrlListProps) => {
   const [urls, setUrls] = useState<ShortenedUrl[]>([]);
   const [loading, setLoading] = useState(true);
+  const [, setTick] = useState(0);
   const { toast } = useToast();
+
+  // Update countdown timers every second
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTick(prev => prev + 1);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     fetchUrls();
@@ -61,6 +71,25 @@ export const UrlList = ({ refresh, onCountChange, onCustomCodeCheck }: UrlListPr
     } finally {
       setLoading(false);
     }
+  };
+
+  const getTimeRemaining = (expireAt: string) => {
+    const expirationTime = new Date(expireAt).getTime();
+    const now = new Date().getTime();
+    const diff = expirationTime - now;
+
+    if (diff <= 0) {
+      return { expired: true, display: "Expired" };
+    }
+
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+    return {
+      expired: false,
+      display: `${hours}h ${minutes}m ${seconds}s`,
+    };
   };
 
   const copyToClipboard = (shortCode: string) => {
@@ -108,39 +137,50 @@ export const UrlList = ({ refresh, onCountChange, onCustomCodeCheck }: UrlListPr
 
   return (
     <div className="space-y-3">
-      {urls.map((url) => (
-        <div
-          key={url.id}
-          className="flex items-center gap-3 p-4 bg-secondary rounded-lg border border-border hover:border-primary/50 transition-colors"
-        >
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 mb-1">
-              <code className="text-primary font-mono text-sm">
-                https://urlgpt.lovable.app/{url.short_code}
-              </code>
+      {urls.map((url) => {
+        const timeRemaining = getTimeRemaining(url.expire_at);
+        return (
+          <div
+            key={url.id}
+            className={`flex items-center gap-3 p-4 bg-secondary rounded-lg border transition-colors ${
+              timeRemaining.expired
+                ? "border-destructive/50 opacity-60"
+                : "border-border hover:border-primary/50"
+            }`}
+          >
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-1">
+                <code className={`font-mono text-sm ${timeRemaining.expired ? "text-muted-foreground line-through" : "text-primary"}`}>
+                  https://urlgpt.lovable.app/{url.short_code}
+                </code>
+              </div>
+              <p className="text-xs text-muted-foreground truncate">{url.original_url}</p>
+              <p className={`text-xs mt-1 ${timeRemaining.expired ? "text-destructive" : "text-primary"}`}>
+                {timeRemaining.expired ? "⏰ Expired" : `⏰ Expires in: ${timeRemaining.display}`}
+              </p>
             </div>
-            <p className="text-xs text-muted-foreground truncate">{url.original_url}</p>
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => copyToClipboard(url.short_code)}
+                className="hover:bg-primary/10"
+                disabled={timeRemaining.expired}
+              >
+                <Copy className="w-4 h-4" />
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => deleteUrl(url.id)}
+                className="hover:bg-destructive/10 hover:text-destructive"
+              >
+                <Trash2 className="w-4 h-4" />
+              </Button>
+            </div>
           </div>
-          <div className="flex gap-2">
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => copyToClipboard(url.short_code)}
-              className="hover:bg-primary/10"
-            >
-              <Copy className="w-4 h-4" />
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => deleteUrl(url.id)}
-              className="hover:bg-destructive/10 hover:text-destructive"
-            >
-              <Trash2 className="w-4 h-4" />
-            </Button>
-          </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 };
