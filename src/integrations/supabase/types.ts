@@ -17,6 +17,7 @@ export type Database = {
       shortened_urls: {
         Row: {
           created_at: string
+          expire_at: string | null
           id: string
           original_url: string
           short_code: string
@@ -24,6 +25,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          expire_at?: string | null
           id?: string
           original_url: string
           short_code: string
@@ -31,6 +33,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          expire_at?: string | null
           id?: string
           original_url?: string
           short_code?: string
