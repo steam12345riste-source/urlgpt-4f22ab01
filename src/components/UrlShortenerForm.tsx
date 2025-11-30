@@ -8,6 +8,7 @@ import { Link } from "lucide-react";
 interface UrlShortenerFormProps {
   onUrlCreated: () => void;
   currentCount: number;
+  hasCustomCode: boolean;
 }
 
 const generateShortCode = (): string => {
@@ -19,7 +20,7 @@ const generateShortCode = (): string => {
   return code;
 };
 
-export const UrlShortenerForm = ({ onUrlCreated, currentCount }: UrlShortenerFormProps) => {
+export const UrlShortenerForm = ({ onUrlCreated, currentCount, hasCustomCode }: UrlShortenerFormProps) => {
   const [url, setUrl] = useState("");
   const [customCode, setCustomCode] = useState("");
   const [loading, setLoading] = useState(false);
@@ -65,6 +66,16 @@ export const UrlShortenerForm = ({ onUrlCreated, currentCount }: UrlShortenerFor
       
       // Validate custom code if provided
       if (shortCode) {
+        if (hasCustomCode) {
+          toast({
+            title: "Custom Code Limit",
+            description: "You can only use 1 custom code. The rest must be random.",
+            variant: "destructive",
+          });
+          setLoading(false);
+          return;
+        }
+
         if (!/^[a-zA-Z0-9]+$/.test(shortCode)) {
           toast({
             title: "Invalid Code",
@@ -151,11 +162,11 @@ export const UrlShortenerForm = ({ onUrlCreated, currentCount }: UrlShortenerFor
         <div className="flex gap-2">
           <Input
             type="text"
-            placeholder="Custom code (optional)"
+            placeholder={hasCustomCode ? "Custom code used (1/1)" : "Custom code (optional, 1 max)"}
             value={customCode}
             onChange={(e) => setCustomCode(e.target.value)}
             className="flex-1 bg-secondary border-border"
-            disabled={loading}
+            disabled={loading || hasCustomCode}
           />
           <Button type="submit" disabled={loading || currentCount >= 11}>
             <Link className="w-4 h-4 mr-2" />
