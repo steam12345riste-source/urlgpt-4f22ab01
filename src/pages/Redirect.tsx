@@ -12,9 +12,9 @@ const Redirect = () => {
       try {
         const { data, error } = await supabase
           .from("shortened_urls")
-          .select("original_url, expire_at")
+          .select("id, original_url, expire_at")
           .eq("short_code", code)
-          .single();
+          .maybeSingle();
 
         if (error || !data) {
           window.location.href = "/";
@@ -26,6 +26,12 @@ const Redirect = () => {
         const now = new Date().getTime();
         
         if (now > expirationTime) {
+          // Delete expired link
+          await supabase
+            .from("shortened_urls")
+            .delete()
+            .eq("id", data.id);
+          
           window.location.href = "/";
           return;
         }

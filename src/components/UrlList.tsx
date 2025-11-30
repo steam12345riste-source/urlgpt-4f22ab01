@@ -55,11 +55,30 @@ export const UrlList = ({ refresh, onCountChange, onCustomCodeCheck }: UrlListPr
 
       if (error) throw error;
 
-      setUrls(data || []);
-      onCountChange(data?.length || 0);
+      // Delete expired URLs
+      const now = new Date().getTime();
+      const expiredIds = data?.filter(url => {
+        const expirationTime = new Date(url.expire_at).getTime();
+        return now > expirationTime;
+      }).map(url => url.id) || [];
+
+      if (expiredIds.length > 0) {
+        await supabase
+          .from("shortened_urls")
+          .delete()
+          .in("id", expiredIds);
+        
+        // Filter out expired URLs from display
+        const activeUrls = data?.filter(url => !expiredIds.includes(url.id)) || [];
+        setUrls(activeUrls);
+        onCountChange(activeUrls.length);
+      } else {
+        setUrls(data || []);
+        onCountChange(data?.length || 0);
+      }
       
       // Check if user has any custom codes (codes that aren't 6 characters long)
-      const hasCustom = data?.some(url => url.short_code.length !== 6) || false;
+      const hasCustom = data?.some(url => url.short_code.length !== 6 && !expiredIds.includes(url.id)) || false;
       onCustomCodeCheck(hasCustom);
     } catch (error) {
       console.error("Error fetching URLs:", error);
