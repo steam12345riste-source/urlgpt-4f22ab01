@@ -8,7 +8,6 @@ import { Link } from "lucide-react";
 interface UrlShortenerFormProps {
   onUrlCreated: () => void;
   currentCount: number;
-  hasCustomCode: boolean;
 }
 
 const generateShortCode = (): string => {
@@ -20,9 +19,8 @@ const generateShortCode = (): string => {
   return code;
 };
 
-export const UrlShortenerForm = ({ onUrlCreated, currentCount, hasCustomCode }: UrlShortenerFormProps) => {
+export const UrlShortenerForm = ({ onUrlCreated, currentCount }: UrlShortenerFormProps) => {
   const [url, setUrl] = useState("");
-  const [customCode, setCustomCode] = useState("");
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
@@ -62,60 +60,7 @@ export const UrlShortenerForm = ({ onUrlCreated, currentCount, hasCustomCode }: 
     setLoading(true);
 
     try {
-      let shortCode = customCode.trim();
-      
-      // Validate custom code if provided
-      if (shortCode) {
-        if (hasCustomCode) {
-          toast({
-            title: "Custom Code Limit",
-            description: "You can only use 1 custom code. The rest must be random.",
-            variant: "destructive",
-          });
-          setLoading(false);
-          return;
-        }
-
-        if (!/^[a-zA-Z0-9]+$/.test(shortCode)) {
-          toast({
-            title: "Invalid Code",
-            description: "Custom code can only contain letters and numbers",
-            variant: "destructive",
-          });
-          setLoading(false);
-          return;
-        }
-        
-        if (shortCode.length < 2 || shortCode.length > 20) {
-          toast({
-            title: "Invalid Code",
-            description: "Custom code must be between 2 and 20 characters",
-            variant: "destructive",
-          });
-          setLoading(false);
-          return;
-        }
-
-        // Check if custom code already exists
-        const { data: existing } = await supabase
-          .from("shortened_urls")
-          .select("short_code")
-          .eq("short_code", shortCode)
-          .maybeSingle();
-
-        if (existing) {
-          toast({
-            title: "Code Taken",
-            description: "This custom code is already in use. Try another one.",
-            variant: "destructive",
-          });
-          setLoading(false);
-          return;
-        }
-      } else {
-        // Generate random code if no custom code provided
-        shortCode = generateShortCode();
-      }
+      const shortCode = generateShortCode();
 
       const userId = localStorage.getItem("urlgpt_user_id") || crypto.randomUUID();
       localStorage.setItem("urlgpt_user_id", userId);
@@ -134,7 +79,6 @@ export const UrlShortenerForm = ({ onUrlCreated, currentCount, hasCustomCode }: 
       });
 
       setUrl("");
-      setCustomCode("");
       onUrlCreated();
     } catch (error) {
       console.error("Error shortening URL:", error);
@@ -159,20 +103,10 @@ export const UrlShortenerForm = ({ onUrlCreated, currentCount, hasCustomCode }: 
           className="bg-secondary border-border"
           disabled={loading}
         />
-        <div className="flex gap-2">
-          <Input
-            type="text"
-            placeholder={hasCustomCode ? "Custom code used (1/1)" : "Custom code (optional, 1 max)"}
-            value={customCode}
-            onChange={(e) => setCustomCode(e.target.value)}
-            className="flex-1 bg-secondary border-border"
-            disabled={loading || hasCustomCode}
-          />
-          <Button type="submit" disabled={loading || currentCount >= 11}>
-            <Link className="w-4 h-4 mr-2" />
-            Shorten
-          </Button>
-        </div>
+        <Button type="submit" disabled={loading || currentCount >= 11} className="w-full">
+          <Link className="w-4 h-4 mr-2" />
+          Shorten
+        </Button>
       </div>
       <p className="text-xs text-muted-foreground text-center">
         {currentCount}/11 links created
