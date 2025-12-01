@@ -12,7 +12,7 @@ interface UrlShortenerFormProps {
 
 const generateShortCode = (): string => {
   const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-  const length = Math.floor(Math.random() * 5) + 4; // Random length between 4-8 characters
+  const length = Math.floor(Math.random() * 11) + 1; // Random length between 1-11 characters
   let code = "";
   for (let i = 0; i < length; i++) {
     code += chars.charAt(Math.floor(Math.random() * chars.length));
