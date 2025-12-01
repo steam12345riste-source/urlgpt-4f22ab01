@@ -107,7 +107,8 @@ export const UrlList = ({ refresh, onCountChange }: UrlListProps) => {
   };
 
   const copyToClipboard = (shortCode: string) => {
-    const shortUrl = `https://urlgpt.lovable.app/${shortCode}`;
+    const baseUrl = import.meta.env.VITE_APP_URL || window.location.origin;
+    const shortUrl = `${baseUrl}/${shortCode}`;
     navigator.clipboard.writeText(shortUrl);
     toast({
       title: "Copied!",
@@ -165,7 +166,7 @@ export const UrlList = ({ refresh, onCountChange }: UrlListProps) => {
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1">
                 <code className={`font-mono text-sm ${timeRemaining.expired ? "text-muted-foreground line-through" : "text-primary"}`}>
-                  https://urlgpt.lovable.app/{url.short_code}
+                  {(import.meta.env.VITE_APP_URL || window.location.origin)}/{url.short_code}
                 </code>
               </div>
               <p className="text-xs text-muted-foreground truncate">{url.original_url}</p>
