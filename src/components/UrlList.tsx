@@ -15,10 +15,9 @@ interface ShortenedUrl {
 interface UrlListProps {
   refresh: number;
   onCountChange: (count: number) => void;
-  onCustomCodeCheck: (hasCustomCode: boolean) => void;
 }
 
-export const UrlList = ({ refresh, onCountChange, onCustomCodeCheck }: UrlListProps) => {
+export const UrlList = ({ refresh, onCountChange }: UrlListProps) => {
   const [urls, setUrls] = useState<ShortenedUrl[]>([]);
   const [loading, setLoading] = useState(true);
   const [, setTick] = useState(0);
@@ -76,10 +75,6 @@ export const UrlList = ({ refresh, onCountChange, onCustomCodeCheck }: UrlListPr
         setUrls(data || []);
         onCountChange(data?.length || 0);
       }
-      
-      // Check if user has any custom codes (codes that aren't 6 characters long)
-      const hasCustom = data?.some(url => url.short_code.length !== 6 && !expiredIds.includes(url.id)) || false;
-      onCustomCodeCheck(hasCustom);
     } catch (error) {
       console.error("Error fetching URLs:", error);
       toast({
