@@ -2,10 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
-*/
-
 @layer base {
   :root {
     --background: 0 0% 4%;
@@ -36,7 +32,11 @@ All colors MUST be HSL.
     --input: 0 0% 15%;
     --ring: 158 64% 52%;
 
-    --radius: 0.5rem;
+    --radius: 0.75rem;
+    
+    /* Custom gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(158 64% 52%) 0%, hsl(158 64% 40%) 100%);
+    --gradient-glow: radial-gradient(600px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), hsl(158 64% 52% / 0.1), transparent 40%);
   }
 }
 
@@ -46,6 +46,38 @@ All colors MUST be HSL.
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
   }
+}
+
+@layer utilities {
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-primary to-emerald-400;
+  }
+  
+  .glow {
+    box-shadow: 0 0 40px hsl(158 64% 52% / 0.3);
+  }
+  
+  .glow-sm {
+    box-shadow: 0 0 20px hsl(158 64% 52% / 0.2);
+  }
+}
+
+/* Scrolling animation for trusted by section */
+@keyframes scroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-scroll {
+  animation: scroll 30s linear infinite;
+}
+
+.animate-scroll:hover {
+  animation-play-state: paused;
 }
