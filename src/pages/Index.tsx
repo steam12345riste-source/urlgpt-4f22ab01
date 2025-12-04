@@ -19,7 +19,7 @@ const Index = () => {
             <Link2 className="w-8 h-8 text-primary" />
             <h1 className="text-4xl font-bold text-foreground">URLGPT</h1>
           </div>
-          <p className="text-muted-foreground">by ExploitZ3r0</p>
+          <p className="text-muted-foreground">by Riste aka ExploitZ3r0</p>
         </div>
 
         <div className="bg-card border border-border rounded-lg p-6 space-y-6">

@@ -66,10 +66,14 @@ export const UrlShortenerForm = ({ onUrlCreated, currentCount }: UrlShortenerFor
       const userId = localStorage.getItem("urlgpt_user_id") || crypto.randomUUID();
       localStorage.setItem("urlgpt_user_id", userId);
 
+      const expireAt = new Date();
+      expireAt.setMonth(expireAt.getMonth() + 1);
+
       const { error } = await supabase.from("shortened_urls").insert({
         short_code: shortCode,
         original_url: url,
         user_id: userId,
+        expire_at: expireAt.toISOString(),
       });
 
       if (error) throw error;
