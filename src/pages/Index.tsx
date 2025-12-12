@@ -1,8 +1,9 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import { UrlShortenerForm } from "@/components/UrlShortenerForm";
 import { UrlList } from "@/components/UrlList";
 import { TrustedBy } from "@/components/TrustedBy";
-import { Link2, Zap, Shield, Globe } from "lucide-react";
+import { Link2, Zap, Shield, Globe, Code } from "lucide-react";
 
 const Index = () => {
   const [refresh, setRefresh] = useState(0);
@@ -66,6 +67,10 @@ const Index = () => {
               <Globe className="w-4 h-4 text-primary" />
               Global CDN
             </div>
+            <Link to="/widget" className="flex items-center gap-2 px-4 py-2 rounded-full bg-primary/20 border border-primary/50 text-sm text-primary hover:bg-primary/30 transition-colors">
+              <Code className="w-4 h-4" />
+              API & Widget
+            </Link>
           </div>
         </div>
       </div>

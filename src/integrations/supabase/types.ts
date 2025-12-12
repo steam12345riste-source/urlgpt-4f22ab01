@@ -14,6 +14,24 @@ export type Database = {
   }
   public: {
     Tables: {
+      api_keys: {
+        Row: {
+          api_key: string
+          created_at: string
+          id: string
+        }
+        Insert: {
+          api_key: string
+          created_at?: string
+          id?: string
+        }
+        Update: {
+          api_key?: string
+          created_at?: string
+          id?: string
+        }
+        Relationships: []
+      }
       shortened_urls: {
         Row: {
           created_at: string
