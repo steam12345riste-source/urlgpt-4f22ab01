@@ -109,13 +109,20 @@ const Widget = () => {
 <!-- End URLGPT Widget -->
 `;
       
-      // Insert widget before </head> or at end of file
+      // Insert widget - handle case-insensitive tags and various HTML formats
       let newContent;
-      if (content.includes("</head>")) {
-        newContent = content.replace("</head>", widgetScript + "\n</head>");
-      } else if (content.includes("</body>")) {
-        newContent = content.replace("</body>", widgetScript + "\n</body>");
+      const headMatch = content.match(/<\/head\s*>/i);
+      const bodyMatch = content.match(/<\/body\s*>/i);
+      const htmlMatch = content.match(/<\/html\s*>/i);
+      
+      if (headMatch) {
+        newContent = content.replace(headMatch[0], widgetScript + "\n" + headMatch[0]);
+      } else if (bodyMatch) {
+        newContent = content.replace(bodyMatch[0], widgetScript + "\n" + bodyMatch[0]);
+      } else if (htmlMatch) {
+        newContent = content.replace(htmlMatch[0], widgetScript + "\n" + htmlMatch[0]);
       } else {
+        // For HTML fragments or files without standard structure, append at the end
         newContent = content + "\n" + widgetScript;
       }
       
