@@ -7,7 +7,6 @@ import { Link, Sparkles } from "lucide-react";
 
 interface UrlShortenerFormProps {
   onUrlCreated: () => void;
-  currentCount: number;
 }
 
 const generateShortCode = (): string => {
@@ -20,7 +19,7 @@ const generateShortCode = (): string => {
   return code;
 };
 
-export const UrlShortenerForm = ({ onUrlCreated, currentCount }: UrlShortenerFormProps) => {
+export const UrlShortenerForm = ({ onUrlCreated }: UrlShortenerFormProps) => {
   const [url, setUrl] = useState("");
   const [customCode, setCustomCode] = useState("");
   const [loading, setLoading] = useState(false);
@@ -28,15 +27,6 @@ export const UrlShortenerForm = ({ onUrlCreated, currentCount }: UrlShortenerFor
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (currentCount >= 11) {
-      toast({
-        title: "Limit Reached",
-        description: "Maximum of 11 shortened links. Delete some to create more.",
-        variant: "destructive",
-      });
-      return;
-    }
 
     if (!url) {
       toast({
@@ -140,14 +130,11 @@ export const UrlShortenerForm = ({ onUrlCreated, currentCount }: UrlShortenerFor
             disabled={loading}
           />
         </div>
-        <Button type="submit" disabled={loading || currentCount >= 11} className="w-full">
+        <Button type="submit" disabled={loading} className="w-full">
           <Link className="w-4 h-4 mr-2" />
           Shorten
         </Button>
       </div>
-      <p className="text-xs text-muted-foreground text-center">
-        {currentCount}/11 links created
-      </p>
     </form>
   );
 };

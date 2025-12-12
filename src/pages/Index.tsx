@@ -7,7 +7,6 @@ import { Link2, Zap, Shield, Globe, Code } from "lucide-react";
 
 const Index = () => {
   const [refresh, setRefresh] = useState(0);
-  const [urlCount, setUrlCount] = useState(0);
 
   const handleUrlCreated = () => {
     setRefresh((prev) => prev + 1);
@@ -42,14 +41,14 @@ const Index = () => {
 
           {/* Main Card */}
           <div className="bg-card/80 backdrop-blur-xl border border-border/50 rounded-2xl p-8 shadow-2xl glow-sm">
-            <UrlShortenerForm onUrlCreated={handleUrlCreated} currentCount={urlCount} />
+            <UrlShortenerForm onUrlCreated={handleUrlCreated} />
             
             <div className="border-t border-border/50 mt-8 pt-8">
               <h2 className="text-lg font-semibold mb-6 text-foreground flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
                 Your Shortened URLs
               </h2>
-              <UrlList refresh={refresh} onCountChange={setUrlCount} />
+              <UrlList refresh={refresh} />
             </div>
           </div>
 
