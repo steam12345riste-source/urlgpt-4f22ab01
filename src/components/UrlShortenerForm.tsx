@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Link } from "lucide-react";
+import { Link, Sparkles } from "lucide-react";
 
 interface UrlShortenerFormProps {
   onUrlCreated: () => void;
@@ -22,6 +22,7 @@ const generateShortCode = (): string => {
 
 export const UrlShortenerForm = ({ onUrlCreated, currentCount }: UrlShortenerFormProps) => {
   const [url, setUrl] = useState("");
+  const [customCode, setCustomCode] = useState("");
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
@@ -61,7 +62,26 @@ export const UrlShortenerForm = ({ onUrlCreated, currentCount }: UrlShortenerFor
     setLoading(true);
 
     try {
-      const shortCode = generateShortCode();
+      const shortCode = customCode.trim() || generateShortCode();
+
+      // Check if custom code already exists
+      if (customCode.trim()) {
+        const { data: existing } = await supabase
+          .from("shortened_urls")
+          .select("id")
+          .eq("short_code", shortCode)
+          .maybeSingle();
+
+        if (existing) {
+          toast({
+            title: "Code Taken",
+            description: "This custom code is already in use. Try another one.",
+            variant: "destructive",
+          });
+          setLoading(false);
+          return;
+        }
+      }
 
       const userId = localStorage.getItem("urlgpt_user_id") || crypto.randomUUID();
       localStorage.setItem("urlgpt_user_id", userId);
@@ -84,6 +104,7 @@ export const UrlShortenerForm = ({ onUrlCreated, currentCount }: UrlShortenerFor
       });
 
       setUrl("");
+      setCustomCode("");
       onUrlCreated();
     } catch (error) {
       console.error("Error shortening URL:", error);
@@ -99,7 +120,7 @@ export const UrlShortenerForm = ({ onUrlCreated, currentCount }: UrlShortenerFor
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="space-y-2">
+      <div className="space-y-3">
         <Input
           type="url"
           placeholder="Enter your long URL..."
@@ -108,6 +129,17 @@ export const UrlShortenerForm = ({ onUrlCreated, currentCount }: UrlShortenerFor
           className="bg-secondary border-border"
           disabled={loading}
         />
+        <div className="flex items-center gap-2">
+          <Sparkles className="w-4 h-4 text-primary flex-shrink-0" />
+          <Input
+            type="text"
+            placeholder="Custom code (optional)"
+            value={customCode}
+            onChange={(e) => setCustomCode(e.target.value.replace(/[^a-zA-Z0-9-_]/g, ""))}
+            className="bg-secondary border-border"
+            disabled={loading}
+          />
+        </div>
         <Button type="submit" disabled={loading || currentCount >= 11} className="w-full">
           <Link className="w-4 h-4 mr-2" />
           Shorten
