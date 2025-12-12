@@ -4,16 +4,12 @@ import { UrlShortenerForm } from "@/components/UrlShortenerForm";
 import { UrlList } from "@/components/UrlList";
 import { TrustedBy } from "@/components/TrustedBy";
 import { Link2, Zap, Shield, Globe, Code } from "lucide-react";
-
 const Index = () => {
   const [refresh, setRefresh] = useState(0);
-
   const handleUrlCreated = () => {
-    setRefresh((prev) => prev + 1);
+    setRefresh(prev => prev + 1);
   };
-
-  return (
-    <div className="min-h-screen bg-background">
+  return <div className="min-h-screen bg-background">
       {/* Hero Section */}
       <div className="relative overflow-hidden">
         {/* Background glow effects */}
@@ -29,7 +25,7 @@ const Index = () => {
             </div>
             
             <h1 className="text-5xl md:text-6xl font-bold mb-4">
-              <span className="text-gradient">URLGPT</span>
+              <span className="text-gradient">x0x</span>
             </h1>
             <p className="text-lg text-muted-foreground mb-2">
               Transform long URLs into short, powerful links
@@ -83,8 +79,6 @@ const Index = () => {
           Powered by Lovable Cloud • Links expire after 30 days
         </p>
       </div>
-    </div>
-  );
+    </div>;
 };
-
 export default Index;
