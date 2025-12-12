@@ -14,10 +14,9 @@ interface ShortenedUrl {
 
 interface UrlListProps {
   refresh: number;
-  onCountChange: (count: number) => void;
 }
 
-export const UrlList = ({ refresh, onCountChange }: UrlListProps) => {
+export const UrlList = ({ refresh }: UrlListProps) => {
   const [urls, setUrls] = useState<ShortenedUrl[]>([]);
   const [loading, setLoading] = useState(true);
   const [, setTick] = useState(0);
@@ -40,7 +39,6 @@ export const UrlList = ({ refresh, onCountChange }: UrlListProps) => {
       const userId = localStorage.getItem("urlgpt_user_id");
       if (!userId) {
         setUrls([]);
-        onCountChange(0);
         setLoading(false);
         return;
       }
@@ -49,8 +47,7 @@ export const UrlList = ({ refresh, onCountChange }: UrlListProps) => {
         .from("shortened_urls")
         .select("*")
         .eq("user_id", userId)
-        .order("created_at", { ascending: false })
-        .limit(11);
+        .order("created_at", { ascending: false });
 
       if (error) throw error;
 
@@ -67,13 +64,10 @@ export const UrlList = ({ refresh, onCountChange }: UrlListProps) => {
           .delete()
           .in("id", expiredIds);
         
-        // Filter out expired URLs from display
         const activeUrls = data?.filter(url => !expiredIds.includes(url.id)) || [];
         setUrls(activeUrls);
-        onCountChange(activeUrls.length);
       } else {
         setUrls(data || []);
-        onCountChange(data?.length || 0);
       }
     } catch (error) {
       console.error("Error fetching URLs:", error);
