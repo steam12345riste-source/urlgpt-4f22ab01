@@ -85,7 +85,7 @@ serve(async (req) => {
       );
     }
 
-    const baseUrl = req.headers.get("origin") || "https://urlgpt.lovable.app";
+    const baseUrl = "https://x0x.lovable.dev";
     
     return new Response(
       JSON.stringify({

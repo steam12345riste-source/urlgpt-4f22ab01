@@ -12,7 +12,7 @@ const Widget = () => {
 
   const supabaseProjectId = import.meta.env.VITE_SUPABASE_PROJECT_ID || "twguhrekvglsqqyqqqkw";
   const apiUrl = `https://${supabaseProjectId}.supabase.co/functions/v1/shorten`;
-  const appUrl = import.meta.env.VITE_APP_URL || window.location.origin;
+  const appUrl = "https://x0x.lovable.dev";
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
