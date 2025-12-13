@@ -26,6 +26,30 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
+    const apiKey = req.headers.get("x-api-key");
+    
+    if (!apiKey) {
+      return new Response(
+        JSON.stringify({ error: "API key required. Add x-api-key header." }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Verify API key exists
+    const { data: keyData, error: keyError } = await supabase
+      .from("api_keys")
+      .select("id")
+      .eq("api_key", apiKey)
+      .maybeSingle();
+
+    if (keyError || !keyData) {
+      console.log("Invalid API key:", apiKey);
+      return new Response(
+        JSON.stringify({ error: "Invalid API key" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const { url, customCode } = await req.json();
 
     if (!url) {
@@ -71,7 +95,7 @@ serve(async (req) => {
       .insert({
         short_code: shortCode,
         original_url: url,
-        user_id: "widget_user",
+        user_id: `api_${keyData.id}`,
         expire_at: expireAt.toISOString(),
       })
       .select()
@@ -85,7 +109,7 @@ serve(async (req) => {
       );
     }
 
-    const baseUrl = "https://x0x.lovable.dev";
+    const baseUrl = req.headers.get("origin") || "https://urlgpt.lovable.app";
     
     return new Response(
       JSON.stringify({
