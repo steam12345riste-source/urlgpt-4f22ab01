@@ -2,42 +2,16 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
-import { Copy, Key, Code, Download, Upload, ArrowLeft } from "lucide-react";
+import { Copy, Code, Download, Upload, ArrowLeft, FileCode } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const Widget = () => {
-  const [apiKey, setApiKey] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
   const [htmlFile, setHtmlFile] = useState<File | null>(null);
   const [processedHtml, setProcessedHtml] = useState<string | null>(null);
   const { toast } = useToast();
 
-  const generateApiKey = async () => {
-    setLoading(true);
-    try {
-      const key = `urlgpt_${crypto.randomUUID().replace(/-/g, "")}`;
-      
-      const { error } = await supabase.from("api_keys").insert({ api_key: key });
-      
-      if (error) throw error;
-      
-      setApiKey(key);
-      toast({
-        title: "API Key Generated!",
-        description: "Save this key securely. You won't see it again.",
-      });
-    } catch (error) {
-      console.error("Error generating API key:", error);
-      toast({
-        title: "Error",
-        description: "Failed to generate API key",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+  const supabaseProjectId = import.meta.env.VITE_SUPABASE_PROJECT_ID || "twguhrekvglsqqyqqqkw";
+  const apiUrl = `https://${supabaseProjectId}.supabase.co/functions/v1/shorten`;
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -46,8 +20,9 @@ const Widget = () => {
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file && file.name.endsWith(".html")) {
+    if (file && (file.name.endsWith(".html") || file.name.endsWith(".htm"))) {
       setHtmlFile(file);
+      setProcessedHtml(null);
     } else {
       toast({
         title: "Invalid file",
@@ -57,28 +32,17 @@ const Widget = () => {
     }
   };
 
-  const processHtmlFile = async () => {
-    if (!htmlFile || !apiKey) return;
-
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const content = e.target?.result as string;
-      
-      const widgetScript = `
+  const getWidgetScript = () => `
 <!-- URLGPT Widget -->
 <script>
 (function() {
-  var URLGPT_API_KEY = '${apiKey}';
-  var URLGPT_API_URL = '${window.location.origin}/functions/v1/shorten';
+  var URLGPT_API_URL = '${apiUrl}';
   
   window.URLGPT = {
     shorten: function(url, customCode) {
       return fetch(URLGPT_API_URL, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': URLGPT_API_KEY
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url: url, customCode: customCode })
       }).then(function(r) { return r.json(); });
     }
@@ -91,14 +55,26 @@ const Widget = () => {
         e.preventDefault();
         var input = form.querySelector('input[type="url"], input[name="url"]');
         var customInput = form.querySelector('input[name="customCode"]');
-        if (input) {
-          URLGPT.shorten(input.value, customInput?.value).then(function(result) {
+        var submitBtn = form.querySelector('button[type="submit"]');
+        if (submitBtn) submitBtn.disabled = true;
+        
+        if (input && input.value) {
+          URLGPT.shorten(input.value, customInput ? customInput.value : null).then(function(result) {
+            if (submitBtn) submitBtn.disabled = false;
             if (result.shortUrl) {
               var output = form.querySelector('[data-urlgpt-output]');
-              if (output) output.textContent = result.shortUrl;
+              if (output) {
+                output.textContent = result.shortUrl;
+                output.href = result.shortUrl;
+              }
               var event = new CustomEvent('urlgpt:shortened', { detail: result });
               form.dispatchEvent(event);
+            } else if (result.error) {
+              alert('Error: ' + result.error);
             }
+          }).catch(function(err) {
+            if (submitBtn) submitBtn.disabled = false;
+            alert('Error shortening URL');
           });
         }
       });
@@ -106,8 +82,15 @@ const Widget = () => {
   });
 })();
 </script>
-<!-- End URLGPT Widget -->
-`;
+<!-- End URLGPT Widget -->`;
+
+  const processHtmlFile = async () => {
+    if (!htmlFile) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const content = e.target?.result as string;
+      const widgetScript = getWidgetScript();
       
       // Insert widget - handle case-insensitive tags and various HTML formats
       let newContent;
@@ -149,20 +132,131 @@ const Widget = () => {
     URL.revokeObjectURL(url);
   };
 
-  const widgetCode = `<!-- URLGPT Widget -->
+  const downloadExampleHtml = () => {
+    const exampleHtml = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>URLGPT Widget Example</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { 
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0a0a0a; 
+      color: #fff; 
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .container {
+      background: #111;
+      border: 1px solid #222;
+      border-radius: 16px;
+      padding: 32px;
+      max-width: 500px;
+      width: 100%;
+    }
+    h1 { 
+      font-size: 24px; 
+      margin-bottom: 8px;
+      color: #22c55e;
+    }
+    p { color: #888; margin-bottom: 24px; }
+    form { display: flex; flex-direction: column; gap: 12px; }
+    input {
+      background: #0a0a0a;
+      border: 1px solid #333;
+      border-radius: 8px;
+      padding: 12px 16px;
+      color: #fff;
+      font-size: 14px;
+    }
+    input:focus { outline: none; border-color: #22c55e; }
+    button {
+      background: #22c55e;
+      color: #000;
+      border: none;
+      border-radius: 8px;
+      padding: 12px 24px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    button:hover { opacity: 0.9; }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+    .result {
+      margin-top: 16px;
+      padding: 16px;
+      background: #0a0a0a;
+      border-radius: 8px;
+      border: 1px solid #333;
+    }
+    .result a {
+      color: #22c55e;
+      text-decoration: none;
+      word-break: break-all;
+    }
+    .result a:hover { text-decoration: underline; }
+    .hidden { display: none; }
+  </style>
+${getWidgetScript()}
+</head>
+<body>
+  <div class="container">
+    <h1>🔗 URL Shortener</h1>
+    <p>Shorten any URL instantly</p>
+    
+    <form data-urlgpt>
+      <input type="url" name="url" placeholder="Enter your long URL..." required>
+      <input type="text" name="customCode" placeholder="Custom code (optional)">
+      <button type="submit">Shorten URL</button>
+      
+      <div class="result hidden">
+        <a href="#" data-urlgpt-output target="_blank"></a>
+      </div>
+    </form>
+  </div>
+
+  <script>
+    // Show result when URL is shortened
+    document.querySelector('[data-urlgpt]').addEventListener('urlgpt:shortened', function(e) {
+      var resultDiv = this.querySelector('.result');
+      resultDiv.classList.remove('hidden');
+    });
+  </script>
+</body>
+</html>`;
+
+    const blob = new Blob([exampleHtml], { type: "text/html" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "urlgpt-example.html";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    
+    toast({
+      title: "Downloaded!",
+      description: "Open urlgpt-example.html in your browser to test",
+    });
+  };
+
+  const widgetCode = `<!-- URLGPT Widget - No API Key Required! -->
 <script>
 (function() {
-  var URLGPT_API_KEY = 'YOUR_API_KEY';
-  var URLGPT_API_URL = '${window.location.origin}/functions/v1/shorten';
+  var URLGPT_API_URL = '${apiUrl}';
   
   window.URLGPT = {
     shorten: function(url, customCode) {
       return fetch(URLGPT_API_URL, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': URLGPT_API_KEY
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url: url, customCode: customCode })
       }).then(function(r) { return r.json(); });
     }
@@ -182,32 +276,23 @@ const Widget = () => {
           </Link>
 
           <h1 className="text-4xl font-bold mb-2">
-            <span className="text-gradient">API & Widget</span>
+            <span className="text-gradient">Widget Integration</span>
           </h1>
-          <p className="text-muted-foreground mb-8">Integrate URLGPT into any website</p>
+          <p className="text-muted-foreground mb-8">Add URL shortening to any website - No API key needed!</p>
 
-          {/* API Key Section */}
+          {/* Example Download */}
           <div className="bg-card/80 backdrop-blur-xl border border-border/50 rounded-2xl p-6 mb-6 glow-sm">
             <div className="flex items-center gap-2 mb-4">
-              <Key className="w-5 h-5 text-primary" />
-              <h2 className="text-lg font-semibold">API Key</h2>
+              <FileCode className="w-5 h-5 text-primary" />
+              <h2 className="text-lg font-semibold">Quick Start - Download Example</h2>
             </div>
-            
-            {apiKey ? (
-              <div className="space-y-4">
-                <div className="flex gap-2">
-                  <Input value={apiKey} readOnly className="font-mono text-sm" />
-                  <Button onClick={() => copyToClipboard(apiKey)} variant="outline">
-                    <Copy className="w-4 h-4" />
-                  </Button>
-                </div>
-                <p className="text-xs text-destructive">⚠️ Save this key now. You won't see it again!</p>
-              </div>
-            ) : (
-              <Button onClick={generateApiKey} disabled={loading} className="w-full">
-                {loading ? "Generating..." : "Generate API Key"}
-              </Button>
-            )}
+            <p className="text-muted-foreground text-sm mb-4">
+              Download a ready-to-use HTML file with the widget already integrated. Open it in your browser to test!
+            </p>
+            <Button onClick={downloadExampleHtml} className="w-full">
+              <Download className="w-4 h-4 mr-2" />
+              Download Example HTML
+            </Button>
           </div>
 
           {/* Widget Code Section */}
@@ -243,47 +328,59 @@ URLGPT.shorten('https://example.com', 'mylink')
   .then(result => console.log(result.shortUrl));`}
               </pre>
             </div>
+
+            <div className="mt-4 text-sm text-muted-foreground">
+              <p className="font-medium mb-2">Or use with HTML form:</p>
+              <pre className="bg-secondary p-3 rounded text-xs overflow-x-auto">
+{`<form data-urlgpt>
+  <input type="url" name="url" placeholder="Enter URL" required>
+  <input type="text" name="customCode" placeholder="Custom code (optional)">
+  <button type="submit">Shorten</button>
+  <a href="#" data-urlgpt-output></a>
+</form>`}
+              </pre>
+            </div>
           </div>
 
           {/* Automatic Widget Adder */}
           <div className="bg-card/80 backdrop-blur-xl border border-border/50 rounded-2xl p-6 glow-sm">
             <div className="flex items-center gap-2 mb-4">
               <Upload className="w-5 h-5 text-primary" />
-              <h2 className="text-lg font-semibold">Automatic Widget Adder</h2>
+              <h2 className="text-lg font-semibold">Add Widget to Your HTML</h2>
             </div>
             
-            {!apiKey ? (
-              <p className="text-muted-foreground text-sm">Generate an API key first to use this feature.</p>
-            ) : (
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm text-muted-foreground mb-2">
-                    Upload your HTML file
-                  </label>
-                  <Input
-                    type="file"
-                    accept=".html"
-                    onChange={handleFileUpload}
-                    className="cursor-pointer"
-                  />
-                </div>
-                
-                {htmlFile && (
-                  <div className="flex gap-2">
-                    <Button onClick={processHtmlFile} className="flex-1">
-                      Add Widget to File
-                    </Button>
-                  </div>
-                )}
-                
-                {processedHtml && (
-                  <Button onClick={downloadProcessedHtml} variant="outline" className="w-full">
-                    <Download className="w-4 h-4 mr-2" />
-                    Download Updated HTML
-                  </Button>
-                )}
+            <p className="text-muted-foreground text-sm mb-4">
+              Upload your HTML file and we'll automatically inject the widget code.
+            </p>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm text-muted-foreground mb-2">
+                  Upload your HTML file
+                </label>
+                <Input
+                  type="file"
+                  accept=".html,.htm"
+                  onChange={handleFileUpload}
+                  className="cursor-pointer"
+                />
               </div>
-            )}
+              
+              {htmlFile && (
+                <div className="flex gap-2">
+                  <Button onClick={processHtmlFile} className="flex-1">
+                    Add Widget to File
+                  </Button>
+                </div>
+              )}
+              
+              {processedHtml && (
+                <Button onClick={downloadProcessedHtml} variant="outline" className="w-full">
+                  <Download className="w-4 h-4 mr-2" />
+                  Download Updated HTML
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       </div>
